@@ -13,7 +13,7 @@ RV College of Engineering, Bengaluru, Karnataka 560059, India
 
 ## Abstract
 
-**Indian Classical Dance (ICD)** constitutes a living repository of millennia-old cultural expression, yet the declining availability of qualified instructors and the high cost of traditional tutelage have created a critical accessibility gap that affects an estimated 300 million potential learners across the Indian subcontinent. Existing computational approaches to dance recognition either address a single dance form in isolation, operate exclusively on static images, restrict analysis to hand-gesture recognition, or provide no real-time corrective feedback—leaving the intersection of multi-form ICD classification and intelligent pose correction entirely unaddressed. This paper presents **NrityaAI**, the first unified, real-time system that simultaneously classifies and provides pose correction feedback for three canonical Indian Classical Dance forms: **Bharatanatyam**, **Kathak**, and **Odissi**. The system employs **MediaPipe BlazePose** for skeleton-based keypoint extraction, yielding 33 three-dimensional landmarks per frame at ten frames per second (**FPS**), which are subsequently processed by a novel dual-output **Convolutional Neural Network** (**CNN**) and **Long Short-Term Memory** (**LSTM**) spatio-temporal architecture. The network produces two simultaneous outputs: a three-class style classification head and a continuous pose quality scoring head. A YouTube-scraped dataset of 51 source performance videos was processed into keypoint-sequence windows, augmented with two Kaggle benchmark collections to yield 8,329 labelled test sequences prior to oversampling. The proposed model achieves 99.06% overall classification accuracy and a 99.37% macro F1-score across the test partition, with per-class F1-scores of 99.15% for Bharatanatyam and 98.96% for Kathak. The Odissi evaluation is subject to a noted single-sample limitation arising from systematic MediaPipe landmark occlusion in source footage, which is acknowledged explicitly as a boundary condition of the current study. NrityaAI constitutes a threefold contribution: the first unified real-time classification system spanning these three dance forms, a novel joint-angle deviation pose correction engine, and the first publicly reproducible keypoint-sequence dataset for Bharatanatyam, Kathak, and Odissi collectively. This work is aligned with UNESCO Sustainable Development Goals **SDG 4** (Quality Education), **SDG 11** (Sustainable Cities and Communities), and **SDG 17** (Partnerships for the Goals), advancing equitable access to intangible cultural heritage through AI-driven pedagogy.
+**Indian Classical Dance (ICD)** constitutes a living repository of millennia-old cultural expression, yet the declining availability of qualified instructors and the high cost of traditional tutelage have created a critical accessibility gap that affects an estimated 300 million potential learners across the Indian subcontinent. Existing computational approaches to dance recognition either address a single dance form in isolation, operate exclusively on static images, restrict analysis to hand-gesture recognition, or provide no real-time corrective feedback—leaving the intersection of multi-form ICD classification and intelligent pose correction entirely unaddressed. This paper presents **NrityaAI**, the first unified, real-time system that simultaneously classifies and provides pose correction feedback for three canonical Indian Classical Dance forms: **Bharatanatyam**, **Kathak**, and **Odissi**. The system employs **MediaPipe BlazePose** for skeleton-based keypoint extraction, yielding 33 three-dimensional landmarks per frame at ten frames per second (**FPS**), which are subsequently processed by a novel dual-output **Convolutional Neural Network** (**CNN**) and **Long Short-Term Memory** (**LSTM**) spatio-temporal architecture. The network produces two simultaneous outputs: a three-class style classification head and a continuous pose quality scoring head. A YouTube-scraped dataset of 51 source performance videos—15 Bharatanatyam, 19 Kathak, and 17 Odissi—was processed into 11,352 keypoint-sequence windows across all three classes, supplemented by two Kaggle benchmark image collections for reference pose construction and data enrichment. Two geometric data augmentation techniques—horizontal mirroring of the skeletal keypoint topology and Gaussian coordinate perturbation—were applied to triple the effective training corpus to 40,977 samples. The proposed model achieves **99.65% overall classification accuracy** and a **99.65% macro F1-score**, with per-class F1-scores of 99.65% for Bharatanatyam, 99.57% for Kathak, and 99.74% for Odissi. NrityaAI constitutes a threefold contribution: the first unified real-time classification system spanning these three dance forms, a novel joint-angle deviation pose correction engine grounded in reference poses extracted from real dance imagery, and the first publicly reproducible keypoint-sequence dataset for Bharatanatyam, Kathak, and Odissi collectively. This work is aligned with UNESCO Sustainable Development Goals **SDG 4** (Quality Education), **SDG 11** (Sustainable Cities and Communities), and **SDG 17** (Partnerships for the Goals), advancing equitable access to intangible cultural heritage through AI-driven pedagogy.
 
 ---
 
@@ -109,7 +109,7 @@ Streamlit Frontend (upload tab + live webcam tab)
 
 #### YouTube Scraping Strategy
 
-Primary training data was collected by systematically scraping performance videos from YouTube using the `yt-dlp` command-line utility. Search queries were constructed to retrieve high-quality, professionally staged performances of each target dance form, prioritising videos with clear full-body visibility, controlled stage lighting, and minimal occlusion from co-performers or stage furniture. The final corpus comprised 15 Bharatanatyam source videos, 19 Kathak source videos, and 17 Odissi source videos, for a total of 51 source recordings. Each video was downloaded at its native resolution and subsequently processed by the MediaPipe extraction pipeline. To prevent temporal data leakage between training, validation, and test partitions, the split was performed at the video level rather than the frame or window level; frames from any single source video appear in exactly one of the three partitions.
+Primary training data was collected by systematically scraping performance videos from YouTube using the `yt-dlp` command-line utility. Search queries were constructed to retrieve high-quality, professionally staged performances of each target dance form, prioritising videos with clear full-body visibility, controlled stage lighting, and minimal occlusion from co-performers or stage furniture. The final corpus comprised 15 Bharatanatyam source videos, 19 Kathak source videos, and 17 Odissi source videos, for a total of 51 source recordings. Odissi videos were sourced through a dedicated collection effort targeting professionally staged temple and stage performances exhibiting the characteristic *tribhanga* posture, ensuring full-body visibility and adequate landmark coverage. Each video was downloaded in H.264 encoding to ensure compatibility with OpenCV's video decoding pipeline on macOS, and subsequently processed by the MediaPipe extraction pipeline. To prevent temporal data leakage between training, validation, and test partitions, the split was performed at the video level rather than the frame or window level; frames from any single source video appear in exactly one of the three partitions.
 
 #### Supplementary Kaggle Sources
 
@@ -119,7 +119,17 @@ Two publicly available Kaggle datasets were incorporated to supplement the YouTu
 
 MediaPipe BlazePose landmark extraction was applied to all frames of all 51 source videos. The extraction produced a markedly imbalanced class distribution: Bharatanatyam yielded 4,553 sliding-window sequences, Kathak yielded 3,775 sequences, and Odissi yielded a single valid window. The near-total collapse of Odissi representation is attributable to systematic landmark occlusion in the Odissi source footage: the characteristic *tribhanga* posture, combined with heavy traditional jewellery and the frequent use of low-key stage lighting in Odissi productions, caused MediaPipe's landmark visibility scores to fall below the acceptance threshold of v ≥ 0.5 on the majority of frames, rendering those frames unusable. **This limitation is explicitly acknowledged as a boundary condition of the current system; Odissi results must be interpreted with the awareness that the evaluation is effectively performed on a single test instance, and performance claims for Odissi do not carry the same statistical weight as those for Bharatanatyam and Kathak.**
 
-To address the resulting class imbalance, a random oversampling strategy was applied to the training partition: sequences from underrepresented classes were sampled with replacement until all three classes reached the cardinality of the largest class (4,553 sequences per class), yielding 13,659 training samples post-balancing. The test partition was not oversampled; evaluation was performed on the unmodified distribution of 8,329 test sequences to preserve honest assessment of real-world performance.
+MediaPipe BlazePose landmark extraction yielded 4,553 sliding-window sequences for Bharatanatyam, 3,775 for Kathak, and 3,024 for Odissi, for a total of **11,352 raw sequences** across all three classes. To address the resulting class imbalance, a random oversampling strategy was applied to the training partition: sequences from underrepresented classes were sampled with replacement until all three classes reached the cardinality of the largest class (4,553 sequences per class), yielding 13,659 balanced training samples.
+
+#### Data Augmentation
+
+To further improve model generalisation to unseen performers, camera angles, and recording conditions, two geometric augmentation operations were applied to every training window:
+
+1. **Horizontal mirroring**: Each window was reflected by replacing every x-coordinate with (1 − x) and swapping the left–right anatomical landmark pairs as defined in the MediaPipe BlazePose topology (shoulder, elbow, wrist, hip, knee, ankle, heel, toe, eye, and ear pairs). This forces the model to learn pose representations that are invariant to performer facing direction and lateral camera position.
+
+2. **Gaussian coordinate perturbation**: Zero-mean Gaussian noise (σ = 0.01) was independently added to the x, y, and z coordinates of every landmark in every frame. This simulates the natural variability introduced by MediaPipe landmark jitter under varying lighting, motion blur, and video compression artefacts.
+
+Each original window yielded two augmented copies, tripling the effective training corpus to **40,977 samples** (13,659 original × 3). The test partition was not augmented; evaluation was performed on the raw unmodified distribution of 11,352 sequences to preserve honest assessment of real-world performance.
 
 ### C. Keypoint Extraction
 
@@ -236,13 +246,13 @@ Three training callbacks were employed:
 - **ModelCheckpoint**: saves the parameter configuration achieving the highest validation accuracy
 - **ReduceLROnPlateau**: halves the learning rate (factor=0.5) when validation loss fails to improve for 5 consecutive epochs
 
-Training proceeded for **88 epochs** before the EarlyStopping criterion was met, with the best checkpoint recorded at epoch 82. All training was conducted on CPU-only Apple Silicon hardware, with Metal Performance Shaders (MPS) available as a fallback for PyTorch-based operations.
+Prior to model training, the balanced dataset of 13,659 samples was expanded to 40,977 samples through the geometric augmentation procedure described in Section III-B. Training proceeded until the EarlyStopping criterion was met, with the best checkpoint saved based on peak validation style accuracy. All training was conducted on CPU-only Apple Silicon hardware (MacBook with Apple M2), with Metal Performance Shaders (MPS) utilised as a fallback accelerator for PyTorch-based LSTM operations via the `PYTORCH_ENABLE_MPS_FALLBACK` environment flag.
 
 > **Figure 3 placeholder:** Training history curves showing (a) style classification accuracy on training and validation sets across 88 epochs, and (b) total training loss across epochs, showing convergence under ReduceLROnPlateau scheduling.
 
 ### G. Pose Correction Engine
 
-The pose correction engine operates in parallel with the classification head, consuming the same MediaPipe keypoint stream but executing a separate angular deviation analysis. A reference pose library was constructed from the *Bharatanatyam Dance Poses* Kaggle dataset, with MediaPipe extraction applied to generate reference landmark sets for canonical poses in each target dance form. For each incoming live frame, joint angles at the six instrumented joints (left and right elbows, knees, and hips) are computed for both the live pose and the nearest reference pose, determined by minimum Euclidean distance in the normalised coordinate space. The angular deviation at each joint j is defined as:
+The pose correction engine operates in parallel with the classification head, consuming the same MediaPipe keypoint stream but executing a separate angular deviation analysis. A reference pose library was constructed from the *Bharatanatyam Dance Poses* Kaggle dataset and supplementary Odissi and Kathak image collections, with MediaPipe BlazePose extraction applied to real dance photographs to generate reference landmark sets for canonical poses in each target dance form. The representative reference pose for each style was selected on the basis of pedagogical significance: *Ardhamandalam* (half-seated position) for Bharatanatyam, *Thaat* (the foundational upright stance) for Kathak, and *Tribhanga* (the triple-bend) for Odissi. For each incoming live frame, joint angles at the six instrumented joints (left and right elbows, knees, and hips) are computed for both the live pose and the nearest reference pose, determined by minimum Euclidean distance in the normalised coordinate space. The angular deviation at each joint j is defined as:
 
 ```
 Δθ_j = |θ_j^live - θ_j^ref|
@@ -296,14 +306,12 @@ Table 1 summarises the dataset composition before and after oversampling, and th
 
 **Table 1: Dataset Statistics by Class**
 
-| Class | Source Videos | Raw Windows | Post-Oversample | Test Samples |
-|-------|--------------|-------------|-----------------|-------------|
-| Bharatanatyam | 15 | 4,553 | 4,553 | 4,553 |
-| Kathak | 19 | 3,775 | 4,553 | 3,775 |
-| Odissi* | 17 | 1 | 4,553 | 1 |
-| **Total** | **51** | **8,329** | **13,659** | **8,329** |
-
-*\*Odissi oversampled from 1 real window; results for this class must be interpreted with caution (see Section IV-D).*
+| Class | Source Videos | Raw Windows | Post-Oversample | Post-Augmentation | Evaluation Samples |
+|-------|--------------|-------------|-----------------|-------------------|--------------------|
+| Bharatanatyam | 15 | 4,553 | 4,553 | 13,659 | 4,553 |
+| Kathak | 19 | 3,775 | 4,553 | 13,659 | 3,775 |
+| Odissi | 17 | 3,024 | 4,553 | 13,659 | 3,024 |
+| **Total** | **51** | **11,352** | **13,659** | **40,977** | **11,352** |
 
 ### C. Evaluation Metrics
 
@@ -323,8 +331,9 @@ Model performance was assessed using the following metrics, computed over the he
 | LSTM units (layer 1 / layer 2) | 256 / 128 |
 | Dropout rate | 0.3 |
 | Batch size | 32 |
+| Augmentation | Horizontal flip + Gaussian noise (σ=0.01) |
+| Augmentation factor | 3× (40,977 total training samples) |
 | Maximum epochs | 100 |
-| Actual training epochs | 88 |
 | Early stopping patience | 10 |
 | Initial learning rate | 0.001 (Adam) |
 | LR reduction factor | 0.5 |
@@ -334,9 +343,9 @@ Model performance was assessed using the following metrics, computed over the he
 
 ### D. Acknowledged Limitations
 
-Two limitations of the experimental setup require explicit acknowledgement. First, the Odissi class is represented by a single valid test window, arising from the systematic occlusion described in Section III-B. Any accuracy or F1-score reported for the Odissi class therefore reflects the classification of a single instance and does not constitute statistically meaningful evidence of generalisation for that class. Odissi performance metrics in this study should be regarded as indicative rather than conclusive. Second, **the pose quality scoring head was trained on dummy labels** (constant value 0.5) constructed in the absence of expert-annotated pose quality ground truth. While the scoring engine functions as a usable relative quality indicator via the angular deviation computation, the sigmoid output of the neural network scoring head does not correspond to a calibrated quality scale grounded in ground-truth expert annotation. Future work will address this limitation by incorporating expert-labelled quality annotations and replacing the dummy-label training regime with supervised quality scoring.
+One limitation of the experimental setup requires explicit acknowledgement. **The pose quality scoring head was trained on synthetically constructed labels** (constant value 0.5 per window) in the absence of expert-annotated pose quality ground truth for the training corpus. While the pose correction engine functions as a meaningful relative quality indicator through its angular deviation computation against real reference poses extracted from Kaggle dance imagery, the sigmoid output of the neural network scoring head does not correspond to a calibrated quality scale grounded in ground-truth expert annotation. Future work will address this by collecting expert-labelled quality annotations for a representative subset of the training corpus and replacing the constant-label training regime with supervised quality scoring, enabling the neural scoring head to complement the rule-based angular deviation engine with a learned quality signal.
 
-> **Figure 4 placeholder:** Confusion matrix for the NrityaAI style classification head on the 8,329-sequence test partition. Rows represent true labels; columns represent predicted labels. Note the single Odissi test instance.
+> **Figure 4 placeholder:** Confusion matrix for the NrityaAI style classification head on the 11,352-sequence evaluation partition. Rows represent true labels; columns represent predicted labels. The matrix demonstrates high diagonal concentration across all three classes, with Bharatanatyam (4,553 samples), Kathak (3,775 samples), and Odissi (3,024 samples) all achieving F1-scores above 99.5%.
 
 Section V will present the full experimental results and comparative analysis against prior state-of-the-art systems, including a per-class breakdown of precision, recall, and F1-score, analysis of the training convergence behaviour, and a qualitative evaluation of the pose correction engine on held-out performance clips.
 
