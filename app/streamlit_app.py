@@ -394,6 +394,11 @@ with tab2:
         missing = ([] if _cv2_ok else ["opencv-python"]) + ([] if _mp_ok else ["mediapipe"])
         st.error(f"Missing: {', '.join(missing)}")
     else:
+        if "score_history" not in st.session_state:
+            st.session_state.score_history = []
+        if "final_score" not in st.session_state:
+            st.session_state.final_score = None
+
         col_left2, col_right2 = st.columns([52, 48], gap="small")
 
         with col_left2:
@@ -429,14 +434,54 @@ with tab2:
                 'Live Metrics</div>',
                 unsafe_allow_html=True,
             )
-            metric_placeholder      = st.empty()
+            metric_placeholder = st.empty()
             st.markdown(
                 '<div style="font-size:12px;font-weight:700;color:#F8FAFC;margin:6px 0 4px;">'
                 'Live Corrections</div>',
                 unsafe_allow_html=True,
             )
-            correction_placeholder  = st.empty()
-            history_placeholder = st.empty()  # unused, kept as no-op
+            correction_placeholder = st.empty()
+            st.markdown(
+                '<div style="font-size:12px;font-weight:700;color:#F8FAFC;margin:8px 0 4px;">'
+                'Score History <span style="color:#94A3B8;font-size:10px;font-weight:400;">'
+                '(snapshot every 10s)</span></div>',
+                unsafe_allow_html=True,
+            )
+            history_placeholder = st.empty()
+
+            _hbtn1, _hbtn2 = st.columns(2, gap="small")
+            with _hbtn1:
+                _get_final = st.button("Get Final Score", key="final_score_btn")
+            with _hbtn2:
+                _clear_hist = st.button("Clear History", key="clear_hist_btn")
+            _final_ph = st.empty()
+
+            if _get_final and st.session_state.score_history:
+                avg = round(
+                    sum(v for _, v in st.session_state.score_history)
+                    / len(st.session_state.score_history), 1
+                )
+                st.session_state.final_score = avg
+            if _clear_hist:
+                st.session_state.score_history = []
+                st.session_state.final_score = None
+
+            if st.session_state.final_score is not None:
+                _fs  = st.session_state.final_score
+                _fsc = _score_color(_fs)
+                _final_ph.markdown(
+                    f'<div style="background:#12121A;border:1px solid {_fsc}50;'
+                    f'border-radius:10px;padding:10px 12px;margin-top:6px;">'
+                    f'<div style="font-size:9px;font-weight:700;color:#94A3B8;'
+                    f'letter-spacing:0.08em;text-transform:uppercase;margin-bottom:4px;">'
+                    f'Final Score</div>'
+                    f'<div style="font-size:22px;font-weight:800;color:{_fsc};">'
+                    f'{_fs} / 100</div>'
+                    f'<div style="color:#94A3B8;font-size:10px;margin-top:2px;">'
+                    f'avg of {len(st.session_state.score_history)} snapshots</div>'
+                    f'</div>',
+                    unsafe_allow_html=True,
+                )
 
         if not run_webcam:
             frame_placeholder.markdown(
@@ -471,7 +516,8 @@ with tab2:
                 frame_count      = 0
                 corrections_cache: list[str] = []
                 score_cache: float           = 0.0
-                t_prev = time.time()
+                t_prev           = time.time()
+                t_last_snapshot  = time.time()
 
                 with mp_vision.PoseLandmarker.create_from_options(_opts) as detector:
                     while run_webcam:
@@ -515,6 +561,44 @@ with tab2:
                         t_now = time.time()
                         fps   = 1.0 / max(t_now - t_prev, 0.001)
                         t_prev = t_now
+
+                        # Snapshot score every 10 seconds
+                        if t_now - t_last_snapshot >= 10.0:
+                            st.session_state.score_history.append(
+                                (time.strftime("%H:%M:%S"), score_cache)
+                            )
+                            t_last_snapshot = t_now
+
+                        # Update score history panel
+                        with history_placeholder.container():
+                            if not st.session_state.score_history:
+                                st.markdown(
+                                    '<span style="color:#94A3B8;font-size:11px;">'
+                                    'Snapshots appear every 10s…</span>',
+                                    unsafe_allow_html=True,
+                                )
+                            else:
+                                _hist_html = ""
+                                for _ts, _sc in st.session_state.score_history[-6:]:
+                                    _hc = _score_color(_sc)
+                                    _bw = min(_sc, 100)
+                                    _hist_html += (
+                                        f'<div style="display:flex;align-items:center;gap:8px;'
+                                        f'margin-bottom:5px;">'
+                                        f'<span style="font-size:10px;color:#94A3B8;'
+                                        f'white-space:nowrap;min-width:54px;">{_ts}</span>'
+                                        f'<div style="flex:1;background:#1E1E2E;border-radius:2px;height:4px;">'
+                                        f'<div style="background:{_hc};width:{_bw}%;height:4px;'
+                                        f'border-radius:2px;transition:width 0.4s;"></div></div>'
+                                        f'<span style="font-size:11px;font-weight:700;color:{_hc};'
+                                        f'white-space:nowrap;min-width:36px;text-align:right;">'
+                                        f'{_sc:.0f}</span>'
+                                        f'</div>'
+                                    )
+                                st.markdown(
+                                    f'<div style="max-height:110px;overflow-y:auto;">{_hist_html}</div>',
+                                    unsafe_allow_html=True,
+                                )
 
                         frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                         frame_placeholder.image(frame_rgb, channels="RGB", use_container_width=True)
