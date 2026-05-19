@@ -1,5 +1,5 @@
 """
-streamlit_app.py — NrityaAI Streamlit frontend (dark theme redesign).
+streamlit_app.py — NrityaAI Streamlit frontend (vibrant compact redesign).
 
 Run:
     streamlit run app/streamlit_app.py
@@ -18,397 +18,361 @@ sys.path.insert(0, str(_SRC))
 
 from utils import CLASSES
 
-# ── Config ────────────────────────────────────────────────────────────────────
-
 API_BASE = "http://localhost:8000"
 
 st.set_page_config(
-    page_title="NrityaAI — Indian Classical Dance Intelligence",
-    page_icon="🎭",
+    page_title="NrityaAI",
+    page_icon=None,
     layout="wide",
-    initial_sidebar_state="expanded",
+    initial_sidebar_state="collapsed",
 )
 
 # ── Global CSS ────────────────────────────────────────────────────────────────
 
 st.markdown("""
 <style>
-/* ── Base ── */
-html, body, [data-testid="stAppViewContainer"] {
-    background-color: #0D0D0D;
-    color: #F5F5F5;
-}
+/* ── Reset & base ── */
+html, body, [data-testid="stAppViewContainer"],
 [data-testid="stMain"], [data-testid="block-container"] {
-    background-color: #0D0D0D;
-    padding-top: 1rem;
+    background-color: #0A0A0F !important;
+    color: #F8FAFC !important;
+    padding-top: 0 !important;
 }
-
-/* ── Sidebar ── */
-[data-testid="stSidebar"] {
-    background-color: #111122 !important;
-    border-right: 1px solid rgba(232,168,56,0.2);
+.block-container {
+    padding: 0.5rem 1rem !important;
+    max-width: 100% !important;
 }
-[data-testid="stSidebar"] * { color: #F5F5F5 !important; }
+#MainMenu, footer, header, [data-testid="stSidebar"] { visibility: hidden; }
 
-/* ── Hide Streamlit chrome ── */
-#MainMenu, footer, header { visibility: hidden; }
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: #12121A; }
+::-webkit-scrollbar-thumb { background: #7C3AED; border-radius: 2px; }
 
 /* ── Tabs ── */
+[data-testid="stTabs"] { margin-top: 0; }
 [data-testid="stTabs"] button {
-    background: transparent;
-    color: #A0A0B0 !important;
-    border-bottom: 2px solid transparent;
-    font-weight: 600;
-    font-size: 0.95rem;
+    background: transparent !important;
+    color: #94A3B8 !important;
+    border: none !important;
+    border-bottom: 2px solid transparent !important;
+    font-size: 0.85rem !important;
+    font-weight: 600 !important;
+    padding: 6px 16px !important;
 }
 [data-testid="stTabs"] button[aria-selected="true"] {
-    color: #E8A838 !important;
-    border-bottom: 2px solid #E8A838;
+    color: #F8FAFC !important;
+    border-bottom: 2px solid #7C3AED !important;
 }
+[data-testid="stTabsContent"] { padding-top: 0.5rem !important; }
 
 /* ── Buttons ── */
 .stButton > button {
-    background: linear-gradient(135deg, #E8A838, #C2185B) !important;
-    color: #0D0D0D !important;
-    font-weight: 700 !important;
+    background: linear-gradient(135deg, #7C3AED, #EC4899) !important;
+    color: #fff !important;
     border: none !important;
     border-radius: 8px !important;
-    padding: 0.6rem 2rem !important;
-    font-size: 1rem !important;
-    transition: opacity 0.2s;
+    font-weight: 600 !important;
+    padding: 8px 20px !important;
+    font-size: 0.85rem !important;
+    width: 100%;
 }
-.stButton > button:hover { opacity: 0.85; }
+.stButton > button:hover { opacity: 0.9 !important; }
 
 /* ── File uploader ── */
 [data-testid="stFileUploader"] {
-    border: 2px dashed rgba(232,168,56,0.5) !important;
-    border-radius: 12px !important;
-    background: #1A1A2E !important;
-    padding: 1rem;
-}
-
-/* ── Selectbox / radio ── */
-[data-testid="stSelectbox"] select,
-[data-testid="stSelectbox"] > div {
-    background: #1A1A2E !important;
-    color: #F5F5F5 !important;
-    border: 1px solid rgba(232,168,56,0.3) !important;
+    border: 1px dashed #7C3AED !important;
     border-radius: 8px !important;
+    background: #12121A !important;
+    padding: 0.5rem !important;
+}
+[data-testid="stFileUploaderDropzoneInstructions"] { display: none; }
+
+/* ── Selectbox ── */
+[data-testid="stSelectbox"] > div {
+    background: #12121A !important;
+    border: 1px solid #1E1E2E !important;
+    border-radius: 8px !important;
+    color: #F8FAFC !important;
 }
 
-/* ── Scrollbar ── */
-::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-track { background: #0D0D0D; }
-::-webkit-scrollbar-thumb { background: #E8A838; border-radius: 3px; }
+/* ── Checkbox ── */
+[data-testid="stCheckbox"] label { font-size: 0.82rem !important; color: #94A3B8 !important; }
 
 /* ── Spinner ── */
-[data-testid="stSpinner"] { color: #E8A838 !important; }
+[data-testid="stSpinner"] { color: #7C3AED !important; }
 
-/* ── Video player ── */
-video { border-radius: 12px; border: 1px solid rgba(232,168,56,0.3); }
+/* ── Columns gap ── */
+[data-testid="column"] { padding: 0 4px !important; }
+
+/* ── Video ── */
+video { border-radius: 8px; border: 1px solid #1E1E2E; }
+
+/* ── Metric ── */
+[data-testid="stMetric"] label { color: #94A3B8 !important; font-size: 0.72rem !important; }
+[data-testid="stMetricValue"] { color: #F8FAFC !important; }
 </style>
 """, unsafe_allow_html=True)
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
-STYLE_ICONS = {"bharatanatyam": "💃", "kathak": "🌀", "odissi": "🏛️"}
-STYLE_COLORS = {"bharatanatyam": "#E8A838", "kathak": "#C2185B", "odissi": "#7B2FBE"}
+STYLE_COLORS = {
+    "bharatanatyam": "#7C3AED",
+    "kathak":        "#EC4899",
+    "odissi":        "#06B6D4",
+}
 
-
-def card(content: str, bg: str = "#1A1A2E", border: str = "rgba(232,168,56,0.2)") -> None:
+def _card(content: str, padding: str = "12px 14px") -> None:
     st.markdown(
-        f'<div style="background:{bg};border:1px solid {border};border-radius:12px;'
-        f'padding:1.2rem 1.5rem;margin-bottom:0.8rem;">{content}</div>',
+        f'<div style="background:#12121A;border:1px solid #1E1E2E;'
+        f'border-radius:10px;padding:{padding};">{content}</div>',
         unsafe_allow_html=True,
     )
 
-
-def metric_card(label: str, value: str, sub: str = "", color: str = "#E8A838") -> str:
+def _metric_card(label: str, value: str, color: str, bar_pct: float = None) -> str:
+    bar_html = ""
+    if bar_pct is not None:
+        bar_html = (
+            f'<div style="background:#1E1E2E;border-radius:2px;height:3px;margin-top:6px;">'
+            f'<div style="background:{color};width:{min(bar_pct,100)}%;height:3px;border-radius:2px;"></div>'
+            f'</div>'
+        )
     return (
-        f'<div style="background:#1A1A2E;border:1px solid rgba(232,168,56,0.2);'
-        f'border-radius:12px;padding:1.4rem 1rem;text-align:center;'
-        f'box-shadow:0 0 12px rgba(232,168,56,0.08);">'
-        f'<div style="font-size:2rem;font-weight:800;color:{color};">{value}</div>'
-        f'<div style="font-size:0.78rem;color:#A0A0B0;margin-top:0.3rem;">{label}</div>'
-        f'{"<div style='font-size:0.85rem;color:#F5F5F5;margin-top:0.2rem;'>" + sub + "</div>" if sub else ""}'
-        f'</div>'
+        f'<div style="background:#12121A;border:1px solid #1E1E2E;border-radius:10px;'
+        f'padding:10px 12px;border-bottom:2px solid {color};">'
+        f'<div style="font-size:9px;font-weight:700;color:#94A3B8;letter-spacing:0.08em;'
+        f'text-transform:uppercase;margin-bottom:4px;">{label}</div>'
+        f'<div style="font-size:18px;font-weight:800;color:{color};">{value}</div>'
+        f'{bar_html}</div>'
     )
 
+def _conf_color(pct: float) -> str:
+    return "#10B981" if pct >= 80 else ("#F59E0B" if pct >= 50 else "#EF4444")
 
-def confidence_bar(pct: float) -> str:
-    color = "#00C853" if pct >= 80 else ("#FF6D00" if pct >= 50 else "#C2185B")
-    return (
-        f'<div style="background:#0D0D0D;border-radius:4px;height:6px;margin-top:0.5rem;">'
-        f'<div style="background:{color};width:{pct}%;height:6px;border-radius:4px;'
-        f'transition:width 0.5s;"></div></div>'
-    )
-
-
-def score_color(score: float) -> str:
-    return "#00C853" if score >= 40 else ("#FF6D00" if score >= 25 else "#C2185B")
-
+def _score_color(score: float) -> str:
+    return "#10B981" if score >= 75 else ("#F59E0B" if score >= 40 else "#EF4444")
 
 @st.cache_data(ttl=5)
-def check_api_health():
+def _health():
     try:
         r = requests.get(f"{API_BASE}/health", timeout=3)
         return r.json()
     except Exception:
         return None
 
+# ── Page header ───────────────────────────────────────────────────────────────
 
-# ── Sidebar ───────────────────────────────────────────────────────────────────
+health = _health()
+api_ok = health is not None and health.get("model_loaded")
 
-with st.sidebar:
-    st.markdown("""
-    <div style="text-align:center;padding:1rem 0 0.5rem;">
-        <div style="font-size:3rem;">🎭</div>
-        <div style="font-size:1.2rem;font-weight:800;
-            background:linear-gradient(90deg,#E8A838,#C2185B);
-            -webkit-background-clip:text;-webkit-text-fill-color:transparent;">
-            NrityaAI
-        </div>
-    </div>
-    <hr style="border:none;border-top:1px solid rgba(232,168,56,0.2);margin:0.5rem 0 1rem;">
-    """, unsafe_allow_html=True)
-
-    health = check_api_health()
-    if health is None:
-        st.markdown('<div style="color:#C2185B;font-size:0.85rem;">⚠️ API offline</div>',
-                    unsafe_allow_html=True)
-    else:
-        status = "✅ Model loaded" if health.get("model_loaded") else "⚠️ No model"
-        st.markdown(f'<div style="color:#00C853;font-size:0.85rem;">🟢 API connected — {status}</div>',
-                    unsafe_allow_html=True)
-
-    st.markdown("""
-    <hr style="border:none;border-top:1px solid rgba(232,168,56,0.1);margin:1rem 0;">
-    <div style="color:#A0A0B0;font-size:0.78rem;line-height:1.6;">
-        NrityaAI classifies Indian classical dance styles using MediaPipe pose estimation
-        and a CNN+LSTM deep learning model trained on real dance videos.
-        <br><br>
-        Supports live webcam and video upload analysis with pose correction feedback.
-    </div>
-    <hr style="border:none;border-top:1px solid rgba(232,168,56,0.1);margin:1rem 0;">
-    <div style="color:#A0A0B0;font-size:0.72rem;text-align:center;">
-        Powered by MediaPipe + CNN+LSTM<br>
-        FastAPI · Keras · PyTorch
-    </div>
-    """, unsafe_allow_html=True)
-
-# ── Header ────────────────────────────────────────────────────────────────────
-
-st.markdown("""
-<div style="text-align:center;padding:1.5rem 0 0.5rem;">
-    <div style="font-size:3rem;font-weight:900;
-        background:linear-gradient(90deg,#E8A838,#C2185B,#7B2FBE);
-        -webkit-background-clip:text;-webkit-text-fill-color:transparent;
-        letter-spacing:-1px;">
-        🎭 NrityaAI
-    </div>
-    <div style="color:#A0A0B0;font-size:1rem;margin-top:0.3rem;">
-        Indian Classical Dance Intelligence System
-    </div>
-    <div style="margin-top:0.8rem;">
-        <span style="background:#1A1A2E;color:#E8A838;border:1px solid #E8A838;
-            border-radius:20px;padding:0.25rem 0.9rem;font-size:0.78rem;margin:0 0.3rem;">
-            💃 Bharatanatyam
-        </span>
-        <span style="background:#1A1A2E;color:#C2185B;border:1px solid #C2185B;
-            border-radius:20px;padding:0.25rem 0.9rem;font-size:0.78rem;margin:0 0.3rem;">
-            🌀 Kathak
-        </span>
-        <span style="background:#1A1A2E;color:#7B2FBE;border:1px solid #7B2FBE;
-            border-radius:20px;padding:0.25rem 0.9rem;font-size:0.78rem;margin:0 0.3rem;">
-            🏛️ Odissi
-        </span>
-    </div>
+st.markdown(f"""
+<div style="display:flex;align-items:center;justify-content:space-between;
+    padding:10px 0 8px;border-bottom:1px solid #1E1E2E;margin-bottom:6px;">
+  <div>
+    <div style="font-size:22px;font-weight:800;color:#7C3AED;line-height:1;">NrityaAI</div>
+    <div style="font-size:12px;color:#94A3B8;margin-top:1px;">Dance Intelligence System</div>
+  </div>
+  <div style="display:flex;align-items:center;gap:8px;">
+    <span style="background:#7C3AED20;color:#7C3AED;border:1px solid #7C3AED40;
+        border-radius:20px;padding:3px 10px;font-size:11px;font-weight:600;">Bharatanatyam</span>
+    <span style="background:#EC489920;color:#EC4899;border:1px solid #EC489940;
+        border-radius:20px;padding:3px 10px;font-size:11px;font-weight:600;">Kathak</span>
+    <span style="background:#06B6D420;color:#06B6D4;border:1px solid #06B6D440;
+        border-radius:20px;padding:3px 10px;font-size:11px;font-weight:600;">Odissi</span>
+    <span style="font-size:11px;color:{'#10B981' if api_ok else '#EF4444'};margin-left:8px;">
+        {'API Connected' if api_ok else 'API Offline'}</span>
+  </div>
 </div>
-<hr style="border:none;border-top:1px solid rgba(232,168,56,0.3);margin:0.8rem 0 1.2rem;">
 """, unsafe_allow_html=True)
 
 # ── Tabs ──────────────────────────────────────────────────────────────────────
 
-tab1, tab2 = st.tabs(["📹  Analyse Video", "🔴  Live Webcam"])
+tab1, tab2 = st.tabs(["Analyse Video", "Live Webcam"])
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-# TAB 1 — Upload Video
+# TAB 1 — Analyse Video
 # ══════════════════════════════════════════════════════════════════════════════
 
 with tab1:
-    st.markdown("""
-    <div style="text-align:center;color:#A0A0B0;font-size:0.9rem;margin-bottom:1rem;">
-        Upload a dance video to classify the style and receive pose correction feedback.
-    </div>
-    """, unsafe_allow_html=True)
+    col_left, col_right = st.columns([45, 55], gap="small")
 
-    uploaded = st.file_uploader(
-        "Drop your dance video here · MP4 • AVI",
-        type=["mp4", "avi"],
-        key="video_upload",
-        label_visibility="visible",
-    )
+    # ── Left: upload + video ──────────────────────────────────────────────────
+    with col_left:
+        st.markdown(
+            '<div style="background:#12121A;border:1px dashed #7C3AED;border-radius:8px;'
+            'padding:8px;margin-bottom:6px;">'
+            '<div style="font-size:12px;font-weight:600;color:#F8FAFC;margin-bottom:2px;">'
+            'Drop video file here</div>'
+            '<div style="font-size:11px;color:#94A3B8;">Supported: MP4, AVI</div>',
+            unsafe_allow_html=True,
+        )
+        uploaded = st.file_uploader(
+            "", type=["mp4", "avi"], key="video_upload", label_visibility="collapsed"
+        )
+        st.markdown("</div>", unsafe_allow_html=True)
 
-    if uploaded is not None:
-        col_vid, col_gap = st.columns([2, 1])
-        with col_vid:
+        if uploaded:
+            st.markdown(
+                '<div style="max-height:220px;overflow:hidden;border-radius:8px;'
+                'border:1px solid #1E1E2E;margin-bottom:6px;">',
+                unsafe_allow_html=True,
+            )
             st.video(uploaded)
+            st.markdown("</div>", unsafe_allow_html=True)
 
-        st.markdown("<div style='margin-top:1rem;'></div>", unsafe_allow_html=True)
-        analyse = st.button("🎭 Analyse Dance Performance", key="analyse_btn")
+        analyse = st.button("Analyse Dance Performance", key="analyse_btn", disabled=uploaded is None)
 
-        if analyse:
-            with st.spinner("🎭 Analysing your dance performance…"):
+    # ── Right: results ────────────────────────────────────────────────────────
+    with col_right:
+        if "result_v1" not in st.session_state:
+            st.session_state.result_v1 = None
+
+        if analyse and uploaded:
+            with st.spinner("Analysing dance performance..."):
                 try:
-                    response = requests.post(
+                    resp = requests.post(
                         f"{API_BASE}/analyze-video",
                         files={"file": (uploaded.name, uploaded.getvalue(), "video/mp4")},
                         timeout=600,
                     )
-                    response.raise_for_status()
-                    result = response.json()
+                    resp.raise_for_status()
+                    st.session_state.result_v1 = resp.json()
                 except requests.exceptions.ConnectionError:
-                    st.error("Cannot connect to API. Is `uvicorn api.main:app` running?")
-                    result = None
-                except requests.exceptions.HTTPError as e:
-                    st.error(f"API error: {e.response.text}")
-                    result = None
+                    st.error("Cannot connect to API. Start: uvicorn api.main:app")
+                    st.session_state.result_v1 = None
                 except Exception as e:
-                    st.error(f"Unexpected error: {e}")
-                    result = None
+                    st.error(f"Error: {e}")
+                    st.session_state.result_v1 = None
 
-            if result:
-                predicted_raw = result.get("predicted_style", "unknown")
-                predicted = predicted_raw.title()
-                confidence = result.get("confidence", 0.0)
-                pose_score_raw = result.get("pose_score", 0.0)
-                pose_score_50 = round(pose_score_raw / 2, 1)  # API returns 0-100; display as X/50
-                probs = result.get("class_probabilities", {})
-                corrections = result.get("corrections", [])
-                low_confidence = confidence < 70.0
-                style_icon = STYLE_ICONS.get(predicted_raw, "🎭")
-                style_color = STYLE_COLORS.get(predicted_raw, "#E8A838") if not low_confidence else "#A0A0B0"
-                conf_bar = confidence_bar(confidence)
-                sc_color = score_color(pose_score_50)
+        result = st.session_state.result_v1
 
-                st.markdown("<hr style='border:none;border-top:1px solid rgba(232,168,56,0.15);margin:1rem 0;'>",
+        if result is None:
+            st.markdown(
+                '<div style="background:#12121A;border:1px solid #1E1E2E;border-radius:10px;'
+                'height:300px;display:flex;align-items:center;justify-content:center;">'
+                '<span style="color:#94A3B8;font-size:13px;">Results will appear here</span>'
+                '</div>',
+                unsafe_allow_html=True,
+            )
+        else:
+            predicted_raw = result.get("predicted_style", "unknown")
+            confidence    = result.get("confidence", 0.0)
+            # API returns pose_score as 0-100; display as X/100
+            pose_score    = round(float(result.get("pose_score", 0.0)), 1)
+            probs         = result.get("class_probabilities", {})
+            corrections   = result.get("corrections", [])
+
+            # "Other" threshold: if max class confidence < 60%, not a known ICD style
+            OTHER_THRESHOLD = 60.0
+            is_other  = confidence < OTHER_THRESHOLD
+            predicted = "Other" if is_other else predicted_raw.title()
+            style_color = "#94A3B8" if is_other else STYLE_COLORS.get(predicted_raw, "#7C3AED")
+
+            if is_other:
+                st.markdown(
+                    '<div style="background:#F59E0B15;border:1px solid #F59E0B50;border-radius:8px;'
+                    'padding:8px 12px;margin-bottom:6px;">'
+                    '<div style="font-size:12px;font-weight:700;color:#F59E0B;">Unrecognised Dance Form</div>'
+                    '<div style="font-size:11px;color:#94A3B8;margin-top:2px;">'
+                    'No class exceeded the 60% confidence threshold. This video does not appear to '
+                    'be Bharatanatyam, Kathak, or Odissi — or the dancer is not fully visible.</div>'
+                    '</div>',
+                    unsafe_allow_html=True,
+                )
+
+            # Row 1: metric cards
+            m1, m2 = st.columns(2, gap="small")
+            with m1:
+                st.markdown(_metric_card("Dance Style", predicted, style_color), unsafe_allow_html=True)
+            with m2:
+                st.markdown(_metric_card("Confidence", f"{confidence:.1f}%",
+                                         _conf_color(confidence), bar_pct=confidence),
                             unsafe_allow_html=True)
 
-                if low_confidence:
-                    st.markdown(
-                        '<div style="background:rgba(255,109,0,0.1);border:1px solid #FF6D00;'
-                        'border-radius:10px;padding:0.8rem 1rem;margin-bottom:1rem;color:#FF6D00;">'
-                        '⚠️ <b>Low confidence prediction.</b> The model is uncertain — '
-                        'try a video with a clearer full-body view or more movement.</div>',
-                        unsafe_allow_html=True,
+            st.markdown("<div style='margin-top:6px;'></div>", unsafe_allow_html=True)
+
+            # Row 2: plotly chart (keep existing logic, restyle only)
+            if probs:
+                labels = [s.title() for s in probs]
+                values = list(probs.values())
+                bar_colors = [style_color if s == predicted_raw else "#1E1E2E" for s in probs]
+                bar_borders = [style_color if s == predicted_raw else "#94A3B8" for s in probs]
+                fig = go.Figure(go.Bar(
+                    x=values, y=labels, orientation="h",
+                    marker_color=bar_colors,
+                    marker_line_color=bar_borders,
+                    marker_line_width=1,
+                    text=[f"{v:.1f}%" for v in values],
+                    textposition="outside",
+                    textfont=dict(color="#F8FAFC", size=11),
+                ))
+                fig.update_layout(
+                    title=dict(text="Classification Confidence",
+                               font=dict(color="#94A3B8", size=12), x=0),
+                    paper_bgcolor="rgba(0,0,0,0)",
+                    plot_bgcolor="rgba(0,0,0,0)",
+                    xaxis=dict(visible=False, range=[0, 120]),
+                    yaxis=dict(tickfont=dict(color="#F8FAFC", size=12), gridcolor="rgba(0,0,0,0)"),
+                    margin=dict(l=0, r=0, t=24, b=0),
+                    height=130,
+                    showlegend=False,
+                    font=dict(color="#F8FAFC"),
+                )
+                st.plotly_chart(fig, use_container_width=True)
+
+            # Row 3: corrections
+            st.markdown(
+                '<div style="border-top:1px solid #1E1E2E;padding-top:6px;margin-top:2px;"></div>',
+                unsafe_allow_html=True,
+            )
+            if is_other:
+                st.markdown(
+                    '<div style="background:#94A3B810;border:1px solid #94A3B830;border-radius:8px;'
+                    'padding:8px 12px;color:#94A3B8;font-size:12px;">'
+                    'Pose corrections are not available for unrecognised dance forms.</div>',
+                    unsafe_allow_html=True,
+                )
+            elif not corrections or corrections == ["Great form! Keep it up."]:
+                st.markdown(
+                    '<div style="background:#10B98110;border:1px solid #10B981;border-radius:8px;'
+                    'padding:8px 12px;display:flex;align-items:center;gap:10px;">'
+                    '<span style="font-weight:700;color:#10B981;font-size:13px;">Perfect Form</span>'
+                    '<span style="color:#94A3B8;font-size:12px;">Posture matches reference</span>'
+                    '</div>',
+                    unsafe_allow_html=True,
+                )
+            else:
+                rows_html = ""
+                for c in corrections[:6]:
+                    parts = c.split(":", 1)
+                    joint = parts[0].strip() if len(parts) > 1 else "Joint"
+                    text  = parts[1].strip() if len(parts) > 1 else c
+                    deg   = ""
+                    if "deviation:" in c:
+                        try:
+                            deg = c.split("deviation:")[-1].replace("°)", "").strip()
+                        except Exception:
+                            deg = ""
+                    badge = (
+                        f'<span style="background:#EF444420;color:#EF4444;border-radius:4px;'
+                        f'padding:1px 6px;font-size:10px;white-space:nowrap;">{deg} deg</span>'
+                        if deg else ""
                     )
-
-                # ── Row 1: Metric cards
-                c1, c2, c3 = st.columns(3)
-                with c1:
-                    st.markdown(metric_card(
-                        "Detected Style",
-                        f"{style_icon} {predicted}",
-                        color=style_color,
-                    ), unsafe_allow_html=True)
-                with c2:
-                    st.markdown(
-                        f'<div style="background:#1A1A2E;border:1px solid rgba(232,168,56,0.2);'
-                        f'border-radius:12px;padding:1.4rem 1rem;text-align:center;'
-                        f'box-shadow:0 0 12px rgba(232,168,56,0.08);">'
-                        f'<div style="font-size:2rem;font-weight:800;color:#F5F5F5;">{confidence:.1f}%</div>'
-                        f'{conf_bar}'
-                        f'<div style="font-size:0.78rem;color:#A0A0B0;margin-top:0.5rem;">Confidence Score</div>'
-                        f'</div>',
-                        unsafe_allow_html=True,
+                    rows_html += (
+                        f'<div style="background:#12121A;border-left:2px solid #EF4444;'
+                        f'border-radius:0 6px 6px 0;padding:8px 10px;margin-bottom:4px;'
+                        f'display:flex;align-items:center;justify-content:space-between;gap:8px;">'
+                        f'<span style="font-weight:700;color:#F8FAFC;font-size:12px;'
+                        f'white-space:nowrap;">{joint}</span>'
+                        f'<span style="color:#94A3B8;font-size:12px;flex:1;'
+                        f'text-align:right;">{text}</span>'
+                        f'{badge}</div>'
                     )
-                with c3:
-                    st.markdown(metric_card(
-                        "Pose Quality",
-                        f"{pose_score_50} / 50",
-                        color=sc_color,
-                    ), unsafe_allow_html=True)
-
-                st.markdown("<div style='margin-top:1.2rem;'></div>", unsafe_allow_html=True)
-
-                # ── Row 2: Plotly bar chart
-                if probs:
-                    labels = [s.title() for s in probs.keys()]
-                    values = list(probs.values())
-                    bar_colors = [
-                        style_color if s == predicted_raw else "#2A2A3E"
-                        for s in probs.keys()
-                    ]
-                    fig = go.Figure(go.Bar(
-                        x=values,
-                        y=labels,
-                        orientation="h",
-                        marker_color=bar_colors,
-                        marker_line_width=0,
-                        text=[f"{v:.1f}%" for v in values],
-                        textposition="outside",
-                        textfont=dict(color="#F5F5F5", size=13),
-                    ))
-                    fig.update_layout(
-                        title=dict(text="Classification Confidence", font=dict(color="#E8A838", size=14)),
-                        paper_bgcolor="#1A1A2E",
-                        plot_bgcolor="#1A1A2E",
-                        xaxis=dict(visible=False, range=[0, 115]),
-                        yaxis=dict(tickfont=dict(color="#F5F5F5", size=13)),
-                        margin=dict(l=10, r=10, t=40, b=10),
-                        height=180,
-                        showlegend=False,
-                    )
-                    st.plotly_chart(fig, use_container_width=True)
-
-                # ── Row 3: Corrections
-                st.markdown("<hr style='border:none;border-top:1px solid rgba(232,168,56,0.15);margin:0.8rem 0;'>",
-                            unsafe_allow_html=True)
-
-                if not corrections or corrections == ["Great form! Keep it up."]:
-                    st.markdown("""
-                    <div style="background:rgba(0,200,83,0.08);border:1px solid #00C853;
-                        border-radius:12px;padding:1.5rem;text-align:center;">
-                        <div style="font-size:2rem;">✅</div>
-                        <div style="font-size:1.2rem;font-weight:700;color:#00C853;">Perfect Form!</div>
-                        <div style="color:#A0A0B0;font-size:0.85rem;margin-top:0.3rem;">
-                            Your posture matches the reference pose
-                        </div>
-                    </div>
-                    """, unsafe_allow_html=True)
-                else:
-                    n = len(corrections)
-                    st.markdown(
-                        f'<div style="display:flex;align-items:center;gap:0.6rem;margin-bottom:0.8rem;">'
-                        f'<span style="font-size:1rem;font-weight:700;color:#E8A838;">📋 Pose Corrections</span>'
-                        f'<span style="background:#C2185B;color:#fff;border-radius:12px;'
-                        f'padding:0.1rem 0.6rem;font-size:0.75rem;font-weight:700;">{n} corrections</span>'
-                        f'</div>',
-                        unsafe_allow_html=True,
-                    )
-                    for correction in corrections:
-                        parts = correction.split(":", 1)
-                        joint = parts[0].strip() if len(parts) > 1 else "Joint"
-                        text = parts[1].strip() if len(parts) > 1 else correction
-                        dev_pct = 0
-                        if "deviation:" in correction:
-                            try:
-                                dev_pct = min(100, float(correction.split("deviation:")[-1].replace("°)", "").strip()))
-                            except Exception:
-                                dev_pct = 50
-                        st.markdown(
-                            f'<div style="background:#1A1A2E;border-left:3px solid #FF6D00;'
-                            f'border-radius:0 12px 12px 0;padding:0.9rem 1rem;margin-bottom:0.5rem;">'
-                            f'<div style="display:flex;justify-content:space-between;align-items:flex-start;">'
-                            f'<span style="font-weight:700;color:#F5F5F5;font-size:0.9rem;">{joint}</span>'
-                            f'<span style="color:#FF6D00;font-size:0.85rem;max-width:70%;text-align:right;">{text}</span>'
-                            f'</div>'
-                            f'<div style="background:#0D0D0D;border-radius:3px;height:3px;margin-top:0.6rem;">'
-                            f'<div style="background:#FF6D00;width:{dev_pct}%;height:3px;border-radius:3px;"></div>'
-                            f'</div></div>',
-                            unsafe_allow_html=True,
-                        )
+                st.markdown(
+                    f'<div style="max-height:160px;overflow-y:auto;">{rows_html}</div>',
+                    unsafe_allow_html=True,
+                )
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -416,17 +380,7 @@ with tab1:
 # ══════════════════════════════════════════════════════════════════════════════
 
 with tab2:
-    st.markdown("""
-    <div style="display:flex;align-items:center;gap:0.6rem;margin-bottom:1rem;">
-        <span style="font-size:1.1rem;font-weight:700;color:#F5F5F5;">🔴 Live Analysis</span>
-        <span style="background:#C2185B;color:#fff;border-radius:12px;
-            padding:0.15rem 0.7rem;font-size:0.72rem;font-weight:700;
-            animation:pulse 1.5s infinite;">LIVE</span>
-    </div>
-    """, unsafe_allow_html=True)
-
-    _mp_ok = True
-    _cv2_ok = True
+    _cv2_ok = _mp_ok = True
     try:
         import cv2
     except ImportError:
@@ -437,27 +391,62 @@ with tab2:
         _mp_ok = False
 
     if not _cv2_ok or not _mp_ok:
-        missing = []
-        if not _cv2_ok:
-            missing.append("opencv-python")
-        if not _mp_ok:
-            missing.append("mediapipe")
-        st.error(f"Missing packages: {', '.join(missing)}. Install with: pip install {' '.join(missing)}")
+        missing = ([] if _cv2_ok else ["opencv-python"]) + ([] if _mp_ok else ["mediapipe"])
+        st.error(f"Missing: {', '.join(missing)}")
     else:
-        style_choice = st.selectbox(
-            "Reference dance style:",
-            options=[c.title() for c in CLASSES],
-            key="webcam_style",
-        )
-        style_key = style_choice.lower()
+        col_left2, col_right2 = st.columns([52, 48], gap="small")
 
-        run_webcam = st.checkbox("▶️ Start Webcam Analysis", value=False, key="webcam_toggle")
+        with col_left2:
+            # header row
+            run_webcam = st.checkbox("Start Webcam Analysis", value=False, key="webcam_toggle")
+            status_badge = (
+                '<span style="background:#EF444420;color:#EF4444;border:1px solid #EF444440;'
+                'border-radius:12px;padding:2px 8px;font-size:10px;font-weight:700;">LIVE</span>'
+                if run_webcam else
+                '<span style="background:#94A3B820;color:#94A3B8;border:1px solid #94A3B840;'
+                'border-radius:12px;padding:2px 8px;font-size:10px;font-weight:700;">READY</span>'
+            )
+            style_choice = st.selectbox(
+                "Reference style", options=[c.title() for c in CLASSES],
+                key="webcam_style", label_visibility="collapsed"
+            )
+            style_key = style_choice.lower()
 
-        col_feed, col_info = st.columns([3, 2])
-        frame_placeholder = col_feed.empty()
-        correction_placeholder = col_info.empty()
+            st.markdown(
+                f'<div style="display:flex;align-items:center;justify-content:space-between;'
+                f'margin-bottom:4px;">'
+                f'<span style="font-size:14px;font-weight:700;color:#F8FAFC;">Live Analysis</span>'
+                f'{status_badge}</div>',
+                unsafe_allow_html=True,
+            )
 
-        if run_webcam:
+            frame_placeholder = st.empty()
+            fps_placeholder   = st.empty()
+
+        with col_right2:
+            st.markdown(
+                '<div style="font-size:12px;font-weight:700;color:#F8FAFC;margin-bottom:6px;">'
+                'Live Metrics</div>',
+                unsafe_allow_html=True,
+            )
+            metric_placeholder      = st.empty()
+            st.markdown(
+                '<div style="font-size:12px;font-weight:700;color:#F8FAFC;margin:6px 0 4px;">'
+                'Live Corrections</div>',
+                unsafe_allow_html=True,
+            )
+            correction_placeholder  = st.empty()
+            history_placeholder = st.empty()  # unused, kept as no-op
+
+        if not run_webcam:
+            frame_placeholder.markdown(
+                '<div style="background:#12121A;border:1px solid #1E1E2E;border-radius:8px;'
+                'height:300px;display:flex;align-items:center;justify-content:center;">'
+                '<span style="color:#94A3B8;font-size:13px;">'
+                'Enable checkbox above to start webcam</span></div>',
+                unsafe_allow_html=True,
+            )
+        else:
             from mediapipe.tasks import python as mp_python
             from mediapipe.tasks.python import vision as mp_vision
             _MODEL_PATH = str(Path(__file__).parent.parent / "models" / "pose_landmarker.task")
@@ -477,11 +466,12 @@ with tab2:
 
             cap = cv2.VideoCapture(0)
             if not cap.isOpened():
-                st.error("Could not open webcam. Check your camera permissions.")
+                st.error("Could not open webcam.")
             else:
-                frame_count = 0
+                frame_count      = 0
                 corrections_cache: list[str] = []
-                score_cache: float = 12.5
+                score_cache: float           = 0.0
+                t_prev = time.time()
 
                 with mp_vision.PoseLandmarker.create_from_options(_opts) as detector:
                     while run_webcam:
@@ -490,23 +480,23 @@ with tab2:
                             st.warning("Webcam feed lost.")
                             break
 
-                        rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                        rgb    = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                         mp_img = mp.Image(image_format=mp.ImageFormat.SRGB, data=rgb)
-                        detection = detector.detect(mp_img)
+                        det    = detector.detect(mp_img)
 
-                        if detection.pose_landmarks:
-                            lms = detection.pose_landmarks[0]
-                            h, w = frame.shape[:2]
+                        if det.pose_landmarks:
+                            lms   = det.pose_landmarks[0]
+                            h, w  = frame.shape[:2]
                             for a, b in _CONNECTIONS:
-                                x1, y1 = int(lms[a].x * w), int(lms[a].y * h)
-                                x2, y2 = int(lms[b].x * w), int(lms[b].y * h)
-                                cv2.line(frame, (x1, y1), (x2, y2), (232, 168, 56), 2)
+                                x1,y1 = int(lms[a].x*w), int(lms[a].y*h)
+                                x2,y2 = int(lms[b].x*w), int(lms[b].y*h)
+                                cv2.line(frame, (x1,y1), (x2,y2), (124,58,237), 2)
                             for lm in lms:
-                                cx, cy = int(lm.x * w), int(lm.y * h)
-                                cv2.circle(frame, (cx, cy), 4, (194, 24, 91), -1)
+                                cx,cy = int(lm.x*w), int(lm.y*h)
+                                cv2.circle(frame, (cx,cy), 4, (6,182,212), -1)
 
                             if frame_count % 30 == 0:
-                                kps = [[lm.x, lm.y, lm.z, lm.visibility] for lm in lms]
+                                kps = [[lm.x,lm.y,lm.z,lm.visibility] for lm in lms]
                                 try:
                                     r = requests.post(
                                         f"{API_BASE}/analyze-frame",
@@ -514,56 +504,83 @@ with tab2:
                                         timeout=5,
                                     )
                                     if r.ok:
-                                        data = r.json()
+                                        data              = r.json()
                                         corrections_cache = data.get("corrections", [])
-                                        score_cache = round(data.get("pose_score", 50) / 2, 1)  # API returns 0-100
+                                        # API returns 0-100; display as X/100
+                                        # API /analyze-frame returns overall_score() → 0-100
+                                        score_cache = round(float(data.get("pose_score", 0.0)), 1)
                                 except Exception:
                                     pass
 
+                        t_now = time.time()
+                        fps   = 1.0 / max(t_now - t_prev, 0.001)
+                        t_prev = t_now
+
                         frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                         frame_placeholder.image(frame_rgb, channels="RGB", use_container_width=True)
+                        fps_placeholder.markdown(
+                            f'<span style="font-size:11px;color:#94A3B8;">{fps:.0f} FPS</span>',
+                            unsafe_allow_html=True,
+                        )
 
-                        sc_color = score_color(score_cache)
+                        sc_color = _score_color(score_cache)
+                        with metric_placeholder.container():
+                            ma, mb = st.columns(2, gap="small")
+                            with ma:
+                                st.markdown(
+                                    _metric_card("Style", style_choice,
+                                                 STYLE_COLORS.get(style_key, "#7C3AED")),
+                                    unsafe_allow_html=True,
+                                )
+                            with mb:
+                                st.markdown(
+                                    _metric_card("Pose Score", f"{score_cache} / 100", sc_color),
+                                    unsafe_allow_html=True,
+                                )
+
                         with correction_placeholder.container():
-                            st.markdown(
-                                f'<div style="background:#1A1A2E;border:1px solid rgba(232,168,56,0.2);'
-                                f'border-radius:12px;padding:1rem;text-align:center;margin-bottom:0.8rem;">'
-                                f'<div style="font-size:1.8rem;font-weight:800;color:{sc_color};">'
-                                f'{score_cache} / 50</div>'
-                                f'<div style="font-size:0.75rem;color:#A0A0B0;">Pose Quality</div>'
-                                f'</div>',
-                                unsafe_allow_html=True,
-                            )
                             if not corrections_cache or corrections_cache == ["Great form! Keep it up."]:
                                 st.markdown(
-                                    '<div style="background:rgba(0,200,83,0.08);border:1px solid #00C853;'
-                                    'border-radius:10px;padding:0.8rem;text-align:center;color:#00C853;">'
-                                    '✅ Great form!</div>',
+                                    '<div style="background:#10B98110;border:1px solid #10B981;'
+                                    'border-radius:8px;padding:8px 10px;font-size:12px;">'
+                                    '<span style="color:#10B981;font-weight:700;">Perfect Form</span>'
+                                    '<span style="color:#94A3B8;"> — Posture matches reference</span>'
+                                    '</div>',
                                     unsafe_allow_html=True,
                                 )
                             else:
-                                for c in corrections_cache:
+                                rows = ""
+                                for c in corrections_cache[:4]:
                                     parts = c.split(":", 1)
-                                    joint = parts[0].strip() if len(parts) > 1 else ""
-                                    text = parts[1].strip() if len(parts) > 1 else c
-                                    st.markdown(
-                                        f'<div style="background:#1A1A2E;border-left:3px solid #FF6D00;'
-                                        f'border-radius:0 8px 8px 0;padding:0.6rem 0.8rem;margin-bottom:0.4rem;">'
-                                        f'<div style="font-size:0.8rem;font-weight:700;color:#F5F5F5;">{joint}</div>'
-                                        f'<div style="font-size:0.75rem;color:#FF6D00;">{text}</div>'
-                                        f'</div>',
-                                        unsafe_allow_html=True,
+                                    joint = parts[0].strip() if len(parts)>1 else ""
+                                    text  = parts[1].strip() if len(parts)>1 else c
+                                    deg   = ""
+                                    if "deviation:" in c:
+                                        try:
+                                            deg = c.split("deviation:")[-1].replace("°)","").strip()
+                                        except Exception:
+                                            pass
+                                    badge = (
+                                        f'<span style="background:#EF444420;color:#EF4444;'
+                                        f'border-radius:4px;padding:1px 5px;font-size:10px;">'
+                                        f'{deg} deg</span>' if deg else ""
                                     )
+                                    rows += (
+                                        f'<div style="background:#12121A;border-left:2px solid #EF4444;'
+                                        f'border-radius:0 6px 6px 0;padding:8px 10px;margin-bottom:4px;">'
+                                        f'<div style="display:flex;justify-content:space-between;'
+                                        f'align-items:center;">'
+                                        f'<span style="font-weight:700;color:#F8FAFC;font-size:12px;">'
+                                        f'{joint}</span>{badge}</div>'
+                                        f'<div style="color:#94A3B8;font-size:11px;margin-top:2px;">'
+                                        f'{text}</div></div>'
+                                    )
+                                st.markdown(
+                                    f'<div style="max-height:200px;overflow-y:auto;">{rows}</div>',
+                                    unsafe_allow_html=True,
+                                )
 
                         frame_count += 1
                         time.sleep(0.033)
 
                 cap.release()
-        else:
-            col_feed.markdown(
-                '<div style="background:#1A1A2E;border:1px solid rgba(232,168,56,0.2);'
-                'border-radius:12px;height:300px;display:flex;align-items:center;'
-                'justify-content:center;color:#A0A0B0;font-size:0.9rem;">'
-                '📷 Enable the checkbox above to start your webcam</div>',
-                unsafe_allow_html=True,
-            )

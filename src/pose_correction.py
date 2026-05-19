@@ -48,7 +48,7 @@ _SUGGESTIONS: dict[str, dict[str, str]] = {
     },
 }
 
-_DEVIATION_THRESHOLD = 15.0   # degrees
+_DEVIATION_THRESHOLD = 10.0   # degrees
 
 
 # ── Reference pose I/O ────────────────────────────────────────────────────────
