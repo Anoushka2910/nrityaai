@@ -1,0 +1,302 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage[margin=1.5cm, landscape]{geometry}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{booktabs}
+\usepackage{ragged2e}
+\usepackage{parskip}
+\usepackage{setspace}
+\singlespacing
+
+\newcolumntype{P}[1]{>{\RaggedRight\arraybackslash}p{#1}}
+
+\begin{document}
+
+\begin{center}
+{\large \textbf{Design Test Cases for NrityaAI}}\\[4pt]
+{\small Indian Classical Dance Classification and Real-Time Pose Correction System}
+\end{center}
+
+\vspace{6pt}
+
+\begin{longtable}{|P{0.6cm}|P{2.2cm}|P{2.2cm}|P{2.8cm}|P{2.4cm}|P{3.0cm}|P{3.0cm}|P{1.1cm}|P{2.4cm}|}
+
+\caption{Design Test Cases for NrityaAI} \label{tab:testcases} \\
+
+\hline
+\textbf{TC No.} &
+\textbf{Test Case Name} &
+\textbf{Features Tested} &
+\textbf{Description} &
+\textbf{Sample Input} &
+\textbf{Expected Output} &
+\textbf{Actual Output} &
+\textbf{Remarks} &
+\textbf{Action Taken on Failure} \\
+\hline
+\endfirsthead
+
+\hline
+\textbf{TC No.} &
+\textbf{Test Case Name} &
+\textbf{Features Tested} &
+\textbf{Description} &
+\textbf{Sample Input} &
+\textbf{Expected Output} &
+\textbf{Actual Output} &
+\textbf{Remarks} &
+\textbf{Action Taken on Failure} \\
+\hline
+\endhead
+
+\hline
+\multicolumn{9}{|r|}{\small Continued on next page\ldots} \\
+\hline
+\endfoot
+
+\hline
+\endlastfoot
+
+%% TC-001
+TC-001 &
+Valid Bharatanatyam Video Upload &
+Video upload, keypoint extraction, CNN+LSTM classification &
+Upload a valid H.264 encoded MP4 file of a Bharatanatyam performance with full-body visibility and classify dance style. &
+Bharatanatyam training video (H.264, 2 min, full-body stage performance) &
+Predicted style: Bharatanatyam; Confidence $\geq$ 95\%; Pose corrections generated. &
+Predicted: Bharatanatyam; Confidence: 99.3\%; 4 pose corrections displayed for elbow and knee joints. &
+\textbf{Success} &
+--- \\
+\hline
+
+%% TC-002
+TC-002 &
+Kathak Video -- Pre-Fix Classification (Attempt 1) &
+Multi-class classification, class imbalance handling &
+Upload the same Kathak H.264 video before any class balancing was applied. Model trained only on Bharatanatyam and Kathak with no oversampling. &
+Kathak performance video (H.264, 1.5 min, solo recital) &
+Predicted style: Kathak; Confidence $\geq$ 90\%. &
+Predicted: Bharatanatyam; Confidence: 97.4\%. Model defaulted to majority class. &
+\textbf{Failure} &
+Investigated class distribution. Found Bharatanatyam had 4,553 windows vs Kathak 3,775. Applied random oversampling to equalise all classes to 4,553. Retrained model. \\
+\hline
+
+%% TC-003
+TC-003 &
+Odissi Video -- Pre-Fix Single Window &
+Odissi class representation, MediaPipe extraction &
+Upload an Odissi video when the Odissi class had only 1 training window (extracted from static images). Verify if model can distinguish Odissi. &
+Odissi stage performance video (MP4, 2 min) &
+Predicted style: Odissi with reasonable confidence. &
+Predicted: Bharatanatyam; Confidence: 99.1\%. Odissi class collapsed due to 1-window representation after image extraction. &
+\textbf{Failure} &
+Downloaded 17 dedicated Odissi YouTube videos (H.264). Re-extracted keypoints yielding 3,024 windows. Retrained with balanced dataset. \\
+\hline
+
+%% TC-004
+TC-004 &
+VP9-Encoded Kathak Video Upload &
+Video codec compatibility, OpenCV decoding &
+Attempt to upload a Kathak video encoded in VP9 format (YouTube default) downloaded via yt-dlp. &
+Kathak video file (\texttt{.f251.mp4}, VP9, 720p) &
+Keypoints extracted successfully; style classified. &
+\texttt{OSError: Cannot open video}. OpenCV 4.x on macOS does not support VP9 decoding. Zero frames extracted. &
+\textbf{Failure} &
+Re-downloaded all videos specifying H.264 format (\texttt{--format 137/136/135}) in yt-dlp. Replaced all VP9 files with H.264 equivalents. \\
+\hline
+
+%% TC-005
+TC-005 &
+Long Video API Timeout &
+API request timeout, video processing pipeline &
+Upload a 3 min 35 sec Odissi video to \texttt{/analyze-video} endpoint. Default \texttt{requests} timeout was 120 seconds. &
+Odissi video (MP4, H.264, 3:35 duration) &
+Full video processed; classification result returned within timeout. &
+\texttt{HTTPConnectionPool: Read timed out (read timeout=120)}. Video processing exceeded 120 s limit. &
+\textbf{Failure} &
+Increased Streamlit request timeout to 600 s. Added \texttt{max\_seconds=0} parameter to \texttt{extract\_from\_video()} to process full video without early stop. \\
+\hline
+
+%% TC-006
+TC-006 &
+Kathak Video -- Post-Oversampling Retest &
+Classification accuracy post class-balance fix &
+Re-upload the identical Kathak H.264 video used in TC-002 after retraining with oversampled balanced dataset (4,553 windows per class). &
+Same Kathak H.264 video as TC-002 &
+Predicted style: Kathak; Confidence $\geq$ 90\%. &
+Predicted: Bharatanatyam; Confidence: 88.2\%. Oversampling improved overall accuracy but this specific video still misclassified due to distribution mismatch. &
+\textbf{Failure} &
+Identified as generalisation limitation. Proceeded to add data augmentation (horizontal flip + Gaussian noise) to tripling the training corpus. Retrained model. \\
+\hline
+
+%% TC-007
+TC-007 &
+Model Not Loaded on API Startup &
+API startup, model loading, \texttt{/health} endpoint &
+Start the FastAPI server without a trained model file present in \texttt{models/} directory. Test \texttt{GET /health} endpoint. &
+No \texttt{best\_model.keras} in \texttt{models/} directory &
+\texttt{\{"status": "ok", "model\_loaded": false\}}; prediction endpoints return HTTP 503. &
+API started but \texttt{/health} returned \texttt{\{"status": "ok", "model\_loaded": false\}}. Streamlit showed ``API Offline'' due to cached stale state. &
+\textbf{Failure} &
+Trained model and placed \texttt{best\_model.keras} in \texttt{models/}. Added \texttt{demo\_model.keras} as third fallback path in \texttt{load\_model\_once()}. Hard-refreshed browser to clear Streamlit cache. \\
+\hline
+
+%% TC-008
+TC-008 &
+Pose Score Display Bug &
+Pose quality score calculation, frontend rendering &
+Upload a valid dance video and observe the pose quality score displayed in the UI metric card. &
+Bharatanatyam video (MP4, H.264) &
+Pose score displayed as a value between 0 and 50 (format: ``X / 50''). &
+Score displayed as ``2500.0 / 50''. API returned \texttt{pose\_score = 50.0} (0--100 range); frontend multiplied by 50 yielding 2500. &
+\textbf{Failure} &
+Fixed frontend: changed \texttt{pose\_score\_raw * 50} to \texttt{pose\_score\_raw / 2} (video tab) and \texttt{/ 2} (webcam tab). Subsequently redesigned display to ``X / 100'' eliminating the ambiguity entirely. \\
+\hline
+
+%% TC-009
+TC-009 &
+Kathak Video -- Post-Augmentation Retest &
+Classification generalisation, augmentation effectiveness &
+Re-upload the same Kathak H.264 video (TC-002, TC-006) after retraining with 3$\times$ augmented dataset (horizontal flip + Gaussian noise, 40,977 samples total). &
+Same Kathak H.264 video as TC-002 and TC-006 &
+Predicted style: Kathak; Confidence $\geq$ 90\%. &
+Predicted: Odissi; Confidence: 99.9\%. Augmentation improved overall macro-F1 to 99.65\% but this specific out-of-distribution Kathak video remained misclassified. &
+\textbf{Failure} &
+Identified as an out-of-distribution generalisation failure. Noted as a known limitation. Recommended using training-set videos for demonstration. Added ``Other'' confidence threshold (60\%) to flag uncertain predictions. \\
+\hline
+
+%% TC-010
+TC-010 &
+Partial Body -- Sitting Pose Webcam &
+Skeleton detection, pose correction with occluded landmarks &
+Test webcam feed with user seated at desk; lower body (knees, ankles) partially or fully out of frame. &
+Live webcam; user seated, only upper body visible &
+Partial corrections generated for visible joints; score reduced due to occluded lower-body landmarks. &
+Knee deviations reported as 71.75\degree{} and 50.98\degree{}. Score 77.3/100 despite user not performing any dance movement. Knee landmarks inferred incorrectly by MediaPipe from partial visibility. &
+\textbf{Failure} &
+Tightened joint deviation threshold from 15\degree{} to 10\degree{} to reduce false positives. Acknowledged as a fundamental limitation of static reference pose comparison without motion context. \\
+\hline
+
+%% TC-011
+TC-011 &
+Valid API Health Check &
+\texttt{GET /health} endpoint, model load status &
+Send a GET request to \texttt{http://localhost:8000/health} after model is successfully loaded at server startup. &
+\texttt{curl -s http://localhost:8000/health} &
+\texttt{\{"status": "ok", "model\_loaded": true\}} with HTTP 200. &
+\texttt{\{"status": "ok", "model\_loaded": true\}} returned in under 50 ms. Streamlit sidebar displayed ``API Connected''. &
+\textbf{Success} &
+--- \\
+\hline
+
+%% TC-012
+TC-012 &
+Odissi Video -- Post Full Dataset Retest &
+Odissi classification after full video dataset &
+Upload an Odissi performance video after retraining with 17 real Odissi YouTube videos (3,024 windows). &
+Odissi stage performance video (MP4, H.264, 2 min) from training set &
+Predicted style: Odissi; Confidence $\geq$ 95\%; Pose corrections relative to Tribhanga reference. &
+Predicted: Odissi; Confidence: 99.9\%; 5 pose corrections generated comparing against real Tribhanga reference pose. &
+\textbf{Success} &
+--- \\
+\hline
+
+%% TC-013
+TC-013 &
+Invalid File Format Upload &
+File type validation, error handling &
+Attempt to upload a \texttt{.txt} file via the video upload interface. Verify that the system rejects it gracefully. &
+Plain text file (\texttt{test.txt}) &
+File uploader rejects the file before submission; no API call made. &
+Streamlit \texttt{file\_uploader} restricted to MP4 and AVI; \texttt{.txt} file was not accepted by the upload widget. Analyse button remained disabled. &
+\textbf{Success} &
+--- \\
+\hline
+
+%% TC-014
+TC-014 &
+No Person in Frame -- Video Upload &
+Pose detection, zero-frame handling, error messaging &
+Upload a video of an empty room with no person present. Verify system handles zero detected poses. &
+10-second MP4 video of an empty stage with no performer &
+HTTP 422 returned with message: ``No pose detected in video. Ensure the full body is visible.'' &
+API returned HTTP 422 with \texttt{"No pose detected in video. Ensure the full body is visible."}. Streamlit displayed the error in a red alert box. &
+\textbf{Success} &
+--- \\
+\hline
+
+%% TC-015
+TC-015 &
+Bharatanatyam Correct Pose -- Pose Corrections &
+Joint angle deviation engine, real reference pose &
+Upload a Bharatanatyam video after replacing synthetic random reference poses with real Ardhamandalam keypoints extracted from Kaggle images. &
+Bharatanatyam performance video with Ardhamandalam stance &
+Fewer than 3 corrections; score $\geq$ 80/100. &
+Score: 85.2/100; 2 corrections generated (Right Elbow: 12.3\degree{}, Left Hip: 11.8\degree{}). Corrections meaningful and anatomically relevant. &
+\textbf{Success} &
+--- \\
+\hline
+
+%% TC-016
+TC-016 &
+Kathak Live Webcam Skeleton Overlay &
+Live webcam, MediaPipe skeleton drawing, OpenCV rendering &
+Enable live webcam tab with Kathak selected as reference style. Verify skeleton overlay renders correctly on the live feed with violet connections and cyan landmark dots. &
+Live webcam feed; user standing with arms extended &
+Violet bone connections drawn on all 12 configured pairs; cyan landmark dots on each joint. &
+Skeleton overlay rendered correctly at 23 FPS. 12 bone connections drawn in RGB (124, 58, 237); joint dots in RGB (6, 182, 212). FPS counter displayed below feed. &
+\textbf{Success} &
+--- \\
+\hline
+
+%% TC-017
+TC-017 &
+Unrecognised Dance Form -- ``Other'' Classification &
+Confidence thresholding, ``Other'' category, non-ICD input &
+Upload a non-ICD video (Bollywood dance clip) where no ICD class exceeds the 60\% confidence threshold. &
+Bollywood dance video (MP4, H.264, 1 min) &
+UI displays ``Unrecognised Dance Form'' warning; style card shows ``Other''; no pose corrections rendered. &
+Confidence: Bharatanatyam 42.1\%, Kathak 35.3\%, Odissi 22.6\%. Max confidence 42.1\% $<$ 60\% threshold. Warning banner displayed; style card shown as ``Other''; corrections suppressed. &
+\textbf{Success} &
+--- \\
+\hline
+
+%% TC-018
+TC-018 &
+\texttt{POST /analyze-frame} Live Frame Endpoint &
+FastAPI \texttt{/analyze-frame}, pose correction via JSON keypoints &
+Send a POST request to \texttt{/analyze-frame} with 33 manually constructed keypoint vectors and style set to ``odissi''. &
+JSON body: \texttt{\{"keypoints": [[x,y,z,v] $\times$ 33], "style": "odissi"\}} &
+HTTP 200; JSON response with \texttt{pose\_score} (0--100) and \texttt{corrections} list. &
+HTTP 200 returned in 12 ms. \texttt{pose\_score}: 68.4; \texttt{corrections}: 3 entries for Left Elbow, Right Knee, Left Hip with deviation angles and suggestion text. &
+\textbf{Success} &
+--- \\
+\hline
+
+%% TC-019
+TC-019 &
+Short Video -- Less Than One Window &
+Minimum video length validation, window creation &
+Upload a 4-second Kathak clip. At 10 FPS sampling rate, this yields 40 frames which is less than the minimum window size of 60 frames. &
+4-second Kathak clip (MP4, H.264) &
+HTTP 422 returned: ``Video too short.'' Graceful error message in UI. &
+HTTP 422 with \texttt{"Video too short."}. Streamlit displayed error in red alert box. Analyse button returned to active state. &
+\textbf{Success} &
+--- \\
+\hline
+
+%% TC-020
+TC-020 &
+Poor Lighting Webcam -- Landmark Detection Failure &
+MediaPipe detection under low-light conditions, skeleton robustness &
+Run live webcam analysis in a dimly lit room where face and limb landmarks are poorly detected by MediaPipe. &
+Live webcam feed; room light turned off, only ambient screen glow &
+Skeleton overlay absent or sparse; pose score remains at default; corrections list empty or shows ``Perfect Form'' due to no landmark data. &
+No pose landmarks detected in 70\% of frames. Skeleton overlay absent. Pose score remained at 0/100. Corrections panel showed ``Perfect Form'' incorrectly due to empty corrections cache. &
+\textbf{Failure} &
+Added minimum visibility check: frames where fewer than 25\% of landmarks have visibility $\geq$ 0.5 are discarded. UI updated to display ``Pose not detected'' message when landmark count is insufficient rather than defaulting to ``Perfect Form''. \\
+\hline
+
+\end{longtable}
+
+\end{document}
